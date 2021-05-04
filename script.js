@@ -1,3 +1,5 @@
+var BPM = 0.0 ;
+var heart = document.getElementById("heartSprite") ;
 let p = document.getElementById("dataText") ;
 if (navigator.bluetooth === undefined) {
     p.textContent = "Web bluetooth is not supported" ;
@@ -9,6 +11,7 @@ else {
         let value = event.target.value ; // a dataviewer object is provided by the object event
         let heartrate = value.getUint8(1) ; // we select the eight bytes that contain the heartrate informations
         p.textContent = heartrate + " BPM" ; // and display it
+        BPM = heartrate ;
     }
     onClickEvent = () => {
         navigator.bluetooth.requestDevice({ filters: [{ services: ['heart_rate'] }] }) // we filter the devices, displaying only those with heartrate services
@@ -22,4 +25,42 @@ else {
         .catch(error => { console.error(error); }) ; // we display the errors on the console
     }
     button.addEventListener('click', onClickEvent ) ;
+    let startTime = performance.now() ;
+    let step = 0 ;
+    updateHeartSize = () => {
+        if (BPM > 0)
+        {
+            let ibi = 60./BPM * 1000 ;
+            let elapsedTime = performance.now() - startTime ;
+            let scaleUp = 1.1 ;
+            let scaleDown = (1/scaleUp).toFixed(2) ;
+            if (elapsedTime < ibi * 0.05 && step == 0 )
+            {
+                step++ ;
+                heartSprite.style.transform = "scale(" + scaleUp + ")" ;
+            }
+            else if ( elapsedTime > ibi * 0.05 && elapsedTime < ibi * 0.22 && step == 1)
+            {
+                step++ ;
+                heartSprite.style.transform = "scale(" + scaleDown + ")" ;
+            }
+            else if ( elapsedTime > ibi * 0.22 && elapsedTime < ibi * 0.26 && step == 2)
+            {
+                step++ ;
+                heartSprite.style.transform = "scale(" + scaleUp + ")" ;
+            }
+            else if (elapsedTime > ibi * 0.26 && step == 3)
+            {
+                step++ ;
+                heartSprite.style.transform = "scale(" + scaleDown + ")" ;
+            }
+            if (elapsedTime > ibi)
+            {
+                step = 0 ;
+                startTime = performance.now() ;
+            }
+        }
+        globalID = requestAnimationFrame(updateHeartSize) ;
+    } ;
+    let globalID = requestAnimationFrame(updateHeartSize) ;
 }
